@@ -11,8 +11,8 @@ using WebApiAuthors;
 namespace WebApiAuthors.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20221012193931_BookAndAuthorRelation")]
-    partial class BookAndAuthorRelation
+    [Migration("20221019180417_comments")]
+    partial class comments
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -32,7 +32,9 @@ namespace WebApiAuthors.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
@@ -47,33 +49,50 @@ namespace WebApiAuthors.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AuthorId");
-
                     b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("WebApiAuthors.Controllers.Entities.Comment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("WebApiAuthors.Controllers.Entities.Comment", b =>
+                {
+                    b.HasOne("WebApiAuthors.Controllers.Entities.Book", "Book")
+                        .WithMany("Comments")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("WebApiAuthors.Controllers.Entities.Book", b =>
                 {
-                    b.HasOne("WebApiAuthors.Controllers.Entities.Author", "Author")
-                        .WithMany("Books")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Author");
-                });
-
-            modelBuilder.Entity("WebApiAuthors.Controllers.Entities.Author", b =>
-                {
-                    b.Navigation("Books");
+                    b.Navigation("Comments");
                 });
 #pragma warning restore 612, 618
         }
