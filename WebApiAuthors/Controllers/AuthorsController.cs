@@ -1,19 +1,50 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Xml.Linq;
 using WebApiAuthors.Controllers.Entities;
+using WebApiAuthors.Filters;
+using WebApiAuthors.Services;
 
 namespace WebApiAuthors.Controllers
 {
     [ApiController]
+    //[Authorize]
     [Route("api/[controller]")]
     public class AuthorsController:ControllerBase
     {
         private readonly ApplicationDbContext context;
+        private readonly IService service;
+        private readonly ServiceTransient serviceTransient;
+        private readonly ServiceScoped serviceScoped;
+        private readonly ServiceSingleton serviceSingleton;
+        private readonly ILogger<AuthorsController> logger;
 
-        public AuthorsController(ApplicationDbContext context)
+        public AuthorsController(ApplicationDbContext context,IService service,ServiceTransient serviceTransient,
+            ServiceScoped serviceScoped, ServiceSingleton serviceSingleton, ILogger<AuthorsController> logger)
         {
             this.context = context;
+            this.service = service;
+            this.serviceTransient = serviceTransient;
+            this.serviceScoped = serviceScoped;
+            this.serviceSingleton = serviceSingleton;
+            this.logger = logger;
+        }
+        [HttpGet("GUID")]
+        //[ResponseCache(Duration =10)]
+        [ServiceFilter(typeof(MyActionFilter))]
+        public ActionResult GetGUID()
+        {
+            
+            return Ok(new
+            {
+                AuthorsCOntrollerTranstient = serviceTransient.guid,
+                AuthorsCOntrollerScoped = serviceScoped.guid,
+                AuthorsCOntrollerSingleton = serviceSingleton.guid,
+                ServiceA_Transient = service.getTransient(),
+                ServiceA_Scoped = service.getScoped(),
+                ServiceA_Singleton = service.getSingleton()
+            });
         }
         [HttpPost]
         public async Task<ActionResult> Post(Author author)
@@ -31,8 +62,10 @@ namespace WebApiAuthors.Controllers
         [HttpGet]
         [HttpGet("list")]
         [HttpGet("/list")]
+        [Authorize]
         public async Task<ActionResult<List<Author>>> Get()/* do not expose entities, use DTO*/
         {
+            logger.LogInformation("logging info");
             return await context.Authors.Include(author=>author.Books).ToListAsync();
         }
         [HttpGet("firstauthor")]
@@ -55,6 +88,9 @@ namespace WebApiAuthors.Controllers
         [HttpGet("syncauthor")]
         public ActionResult<Author> ReturnSyncAuthor()
         {
+            var AuthorsCOntrollerTranstient = serviceTransient.guid;
+            var AuthorsCOntrollerScoped = serviceScoped.guid;
+            var AuthorsCOntrollerSingleton = serviceSingleton.guid;
             return new Author() { Id=9999,Name="Sync Author"};
         }
         [HttpGet("{id:int}")]
