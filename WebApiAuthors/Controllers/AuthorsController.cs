@@ -12,16 +12,25 @@ namespace WebApiAuthors.Controllers
     {
         private readonly ApplicationDbContext context;
         private readonly IMapper mapper;
+        private readonly IConfiguration configuration;
 
-        
-
-        public AuthorsController(ApplicationDbContext context, IMapper mapper)
+        public AuthorsController(ApplicationDbContext context, IMapper mapper, IConfiguration configuration)
         {
             this.context = context;
             this.mapper = mapper;
-            
+            this.configuration = configuration;
         }
-        
+        [HttpGet("surnameconfig")]
+        public ActionResult<string> GetSurnameConfig()
+        {
+            var surnameconfig = configuration["surname"];
+            if (surnameconfig==null)
+            {
+                return NotFound();
+            }
+            return Ok(new{ surname=surnameconfig });
+        }
+
         [HttpPost]
         public async Task<ActionResult> Post(AuthorCreationDTO authorCreationDTO)
         {
