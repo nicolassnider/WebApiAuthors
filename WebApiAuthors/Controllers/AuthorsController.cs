@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApiAuthors.Controllers.Entities;
@@ -8,6 +10,7 @@ namespace WebApiAuthors.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme,Policy ="IsAdmin")]
     public class AuthorsController:ControllerBase
     {
         private readonly ApplicationDbContext context;
@@ -47,7 +50,8 @@ namespace WebApiAuthors.Controllers
             return CreatedAtRoute("getAuthorById", new {id=author.Id},authorDTO);
         }
 
-        [HttpGet]
+        [HttpGet(Name ="getAuthors")]
+        [AllowAnonymous]
         
         public async Task<ActionResult<List<AuthorDTO>>> Get()
         {
@@ -65,7 +69,7 @@ namespace WebApiAuthors.Controllers
             if (author == null) return NotFound();
             return mapper.Map<AuthorDTOWithBooks>(author);
         }
-        [HttpGet("{name}")]
+        [HttpGet("{name}", Name = "getAuthorByName")]
         public async Task<ActionResult<List<AuthorDTO>>> GetAuthorsByName(string name)
         {
             var authors = await context.Authors.Where(authorBd => authorBd.Name.Contains(name)).ToListAsync();
@@ -73,7 +77,7 @@ namespace WebApiAuthors.Controllers
             return mapper.Map<List<AuthorDTO>>(authors);
         }
         
-        [HttpPut("{id:int}")]
+        [HttpPut("{id:int}",Name ="updateAuthor")]
         public async Task<ActionResult<Author>> Put(AuthorCreationDTO authorCreationDTO,int id)
         {
             
@@ -87,7 +91,7 @@ namespace WebApiAuthors.Controllers
             await context.SaveChangesAsync();
             return NoContent();
         }
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id:int}",Name ="deleteAuthor")]
         public async Task<ActionResult<Author>> Delete(int id)
         {
             var authorExists = await context.Authors.AnyAsync(author => author.Id == id);

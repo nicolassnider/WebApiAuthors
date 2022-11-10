@@ -1,4 +1,6 @@
-﻿namespace WebApiAuthors.Controllers.Entities
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace WebApiAuthors.Controllers.Entities
 {
     public class Comment
     {
@@ -6,6 +8,8 @@
         public string Content { get; set; }
         public int BookId { get; set; }
         public Book Book { get; set; }
+        public string UserId { get; set; }
+        public IdentityUser User { get; set; }
 
     }
 }
